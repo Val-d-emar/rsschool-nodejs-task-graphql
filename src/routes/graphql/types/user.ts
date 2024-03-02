@@ -13,14 +13,29 @@ export const TUser: GraphQLObjectType = new GraphQLObjectType({
         id: { type: UUIDType },
         name: { type: GraphQLString },
         balance: { type: GraphQLFloat },
-        profile: { type: TProfile },
+        profile: {
+            type: TProfile,
+            resolve: async ({ id }: obj, _, context: PrismaClient) => {
+                return await context.profile.findFirst({ where: { userId: id } });
+            },
+        },
         posts: {
             type: new GraphQLList(TPost),
             resolve: async ({ id }: obj, _, context: PrismaClient) => {
-                return await context.post.findMany({ where: { authorId: id } })
+                return await context.post.findMany({ where: { authorId: id } });
             }
         },
-        userSubscribedTo: { type: new GraphQLList(TUser) },
-        subscribedToUser: { type: new GraphQLList(TUser) },
+        userSubscribedTo: {
+            type: new GraphQLList(TUser),
+            resolve: async ({ id }: obj, _, context: PrismaClient) => {
+                return await context.subscribersOnAuthors.findMany({ where: { subscriberId: id } });
+            }
+        },
+        subscribedToUser: {
+            type: new GraphQLList(TUser),
+            resolve: async ({ id }: obj, _, context: PrismaClient) => {
+                return await context.subscribersOnAuthors.findMany({ where: { authorId: id } });
+            }
+        },
     }),
 });

@@ -4,6 +4,8 @@ import { TUser } from './types/user.js';
 import { PrismaClient } from '@prisma/client';
 import { TPost } from './types/post.js';
 import { UUIDType } from './types/uuid.js';
+import { TProfile } from './types/profile.js';
+import { TMemberType, TMemberTypeId } from './types/membertype.js';
 
 export const gqlResponseSchema = Type.Partial(
   Type.Object({
@@ -24,35 +26,14 @@ export const createGqlResponseSchema = {
   ),
 };
 
-// const {
-//   body: { errors },
-// } = await gqlQuery(app, {
-//   query: `query {
-//     users {
-//         id
-//         posts {
-//           id
-//         }
-//         profile {
-//           id
-//           memberType {
-//             id
-//           }
-//         }
-//         userSubscribedTo {
-//           id
-//         }
-//         subscribedToUser {
-//           id
-//         }
-//     }
-// }`,
-// });
 type obj = {
   id: string
 }
 const uid = {
   type: UUIDType
+}
+const mid = {
+  type: TMemberTypeId
 }
 
 export const createGqlQuerySchema = new GraphQLSchema({
@@ -71,19 +52,47 @@ export const createGqlQuerySchema = new GraphQLSchema({
           return await context.post.findMany();
         },
       },
+      profiles: {
+        type: new GraphQLList(TProfile),
+        resolve: async (_, __, context: PrismaClient) => {
+          return await context.profile.findMany();
+        },
+      },
+      member_types: {
+        type: new GraphQLList(TMemberType),
+        resolve: async (_, __, context: PrismaClient) => {
+          return await context.memberType.findMany();
+        },
+      },
       user: {
         type: TUser,
         args: { id: uid },
-        resolve: async (_, { id }:obj, context: PrismaClient) => {     
+        resolve: async (_, { id }: obj, context: PrismaClient) => {
           return await context.user.findFirst({ where: { id } });
         },
       },
       post: {
         type: TPost,
         args: { id: uid },
-        resolve: async (_, { id }:obj, context: PrismaClient) => {            
-            return await context.post.findFirst({ where: { id } });
-    },},},
+        resolve: async (_, { id }: obj, context: PrismaClient) => {
+          return await context.post.findFirst({ where: { id } });
+        },
+      },
+      profile: {
+        type: TProfile,
+        args: { id: uid },
+        resolve: async (_, { id }: obj, context: PrismaClient) => {
+          return await context.profile.findFirst({ where: { id } });
+        },
+      },
+      member_type: {
+        type: TMemberType,
+        args: { id: mid },
+        resolve: async (_, { id }: obj, context: PrismaClient) => {
+          return await context.memberType.findFirst({ where: { id } });
+        },
+      },
+    },
   }),
 });
 
