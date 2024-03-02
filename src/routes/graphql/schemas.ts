@@ -1,5 +1,5 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { GraphQLObjectType, GraphQLSchema } from 'graphql';
+import { GraphQLList, GraphQLObjectType, GraphQLSchema } from 'graphql';
 import { TUser } from './types/user.js';
 import { PrismaClient } from '@prisma/client';
 
@@ -84,13 +84,12 @@ export const createGqlResponseSchema = {
 //   }),
 // });
 
-
 export const createGqlQuerySchema = new GraphQLSchema({
   query: new GraphQLObjectType({
     name: 'Query',
     fields: {
       users: {
-        type: TUser,
+        type: new GraphQLList(TUser),
         resolve: async (_, { _id }, context: PrismaClient) => {
           return await context.user.findMany();
         },
