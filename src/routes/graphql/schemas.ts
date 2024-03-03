@@ -4,7 +4,7 @@ import { TUser, TUserAdd } from './types/user.js';
 import { PrismaClient } from '@prisma/client';
 import { TPost, TPostAdd } from './types/post.js';
 import { UUIDType } from './types/uuid.js';
-import { TProfile } from './types/profile.js';
+import { TProfile, TProfileAdd } from './types/profile.js';
 import { TMemberType, TMemberTypeId } from './types/membertype.js';
 import { userFields } from '../users/schemas.js';
 import { MemberTypeId } from '../member-types/schemas.js';
@@ -35,9 +35,13 @@ type obj = {
   dto: {
     name: string;
     balance: number;
-    authorId: string;
+    authorId: UUID;
     title: string;
     content: string;
+    userId: UUID;
+    memberTypeId: MemberTypeId;
+    isMale: boolean;
+    yearOfBirth: number;
   };
 }
 type objm = {
@@ -127,9 +131,9 @@ export const createGqlQuerySchema = new GraphQLSchema({
       },
       createProfile: {
         type: TProfile,
-        args: { id: uid },
-        resolve: async (_, { id }: obj, context: PrismaClient) => {
-          return await context.profile.findFirst({ where: { id } });
+        args: { dto: TProfileAdd },
+        resolve: async (_, { dto }: obj, context: PrismaClient) => {
+          return await context.profile.create({ data: dto });
         },
       },
     },
