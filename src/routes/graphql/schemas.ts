@@ -1,5 +1,5 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema } from 'graphql';
+import { GraphQLBoolean, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema } from 'graphql';
 import { TUser, TUserAdd } from './types/user.js';
 import { PrismaClient } from '@prisma/client';
 import { TPost, TPostAdd } from './types/post.js';
@@ -135,6 +135,33 @@ export const createGqlQuerySchema = new GraphQLSchema({
         resolve: async (_, { dto }: obj, context: PrismaClient) => {
           return await context.profile.create({ data: dto });
         },
+      },
+      deleteUser: {
+        type: GraphQLBoolean,
+        args: { id: uid },
+        resolve: async (_, { id }: obj, context: PrismaClient) => {
+          return await context.user.delete({ where: { id: id } })
+            .then(() => true)
+            .catch(_ => false);
+        }
+      },
+      deletePost: {
+        type: GraphQLBoolean,
+        args: { id: uid },
+        resolve: async (_, { id }: obj, context: PrismaClient) => {
+          return await context.post.delete({ where: { id: id } })
+            .then(() => true)
+            .catch(_ => false);
+        }
+      },
+      deleteProfile: {
+        type: GraphQLBoolean,
+        args: { id: uid },
+        resolve: async (_, { id }: obj, context: PrismaClient) => {
+          return await context.profile.delete({ where: { id: id } })
+            .then(() => true)
+            .catch(_ => false);
+        }
       },
     },
   }),
