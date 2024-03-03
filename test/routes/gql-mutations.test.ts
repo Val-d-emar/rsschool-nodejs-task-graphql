@@ -147,67 +147,67 @@ await test('gql-mutations', async (t) => {
     const { body: foundChangedPost } = await getPost(app, data.changePost.id);
     const { body: foundChangedUser } = await getUser(app, data.changeUser.id);
     const { body: foundChangedProfile } = await getProfile(app, data.changeProfile.id);
-    console.log(errors)
+
     t.ok(!errors);
     t.ok(foundChangedPost.title === changedTitle);
     t.ok(foundChangedUser.name === changedName);
     t.ok(foundChangedProfile.isMale === changedIsMale);
   });
 
-  // await t.test('Change profile => fail; invalid dto.userId.', async (t) => {
-  //   const {
-  //     body: { errors },
-  //   } = await gqlQuery(app, {
-  //     query: `mutation ($id: UUID!, $dto: ChangeProfileInput!) {
-  //       changeProfile(id: $id, dto: $dto) {
-  //           id
-  //       }
-  //   }`,
-  //     variables: {
-  //       id: randomUUID(),
-  //       dto: {
-  //         userId: randomUUID(),
-  //       },
-  //     },
-  //   });
+  await t.test('Change profile => fail; invalid dto.userId.', async (t) => {
+    const {
+      body: { errors },
+    } = await gqlQuery(app, {
+      query: `mutation ($id: UUID!, $dto: ChangeProfileInput!) {
+        changeProfile(id: $id, dto: $dto) {
+            id
+        }
+    }`,
+      variables: {
+        id: randomUUID(),
+        dto: {
+          userId: randomUUID(),
+        },
+      },
+    });
 
-  //   t.ok(errors.length === 1);
-  //   const message = errors[0].message as string;
-  //   t.ok(
-  //     message.includes(`Field \"userId\" is not defined by type \"ChangeProfileInput\"`),
-  //   );
-  // });
+    t.ok(errors.length === 1);
+    const message = errors[0].message as string;
+    t.ok(
+      message.includes(`Field \"userId\" is not defined by type \"ChangeProfileInput\"`),
+    );
+  });
 
-  // await t.test('Subs mutations.', async (t) => {
-  //   const { body: user1 } = await createUser(app);
-  //   const { body: user2 } = await createUser(app);
-  //   const { body: user3 } = await createUser(app);
-  //   const { body: user4 } = await createUser(app);
+  await t.test('Subs mutations.', async (t) => {
+    const { body: user1 } = await createUser(app);
+    const { body: user2 } = await createUser(app);
+    const { body: user3 } = await createUser(app);
+    const { body: user4 } = await createUser(app);
 
-  //   await subscribeTo(app, user3.id, user4.id);
+    await subscribeTo(app, user3.id, user4.id);
 
-  //   const {
-  //     body: { errors },
-  //   } = await gqlQuery(app, {
-  //     query: `mutation ($userId1: UUID!, $authorId1: UUID!, $userId2: UUID!, $authorId2: UUID!) {
-  //       subscribeTo(userId: $userId1, authorId: $authorId1) {
-  //           id
-  //       }
-  //       unsubscribeFrom(userId: $userId2, authorId: $authorId2)
-  //   }`,
-  //     variables: {
-  //       userId1: user1.id,
-  //       authorId1: user2.id,
-  //       userId2: user3.id,
-  //       authorId2: user4.id,
-  //     },
-  //   });
+    const {
+      body: { errors },
+    } = await gqlQuery(app, {
+      query: `mutation ($userId1: UUID!, $authorId1: UUID!, $userId2: UUID!, $authorId2: UUID!) {
+        subscribeTo(userId: $userId1, authorId: $authorId1) {
+            id
+        }
+        unsubscribeFrom(userId: $userId2, authorId: $authorId2)
+    }`,
+      variables: {
+        userId1: user1.id,
+        authorId1: user2.id,
+        userId2: user3.id,
+        authorId2: user4.id,
+      },
+    });
 
-  //   const { body: subscribedToUser2 } = await subscribedToUser(app, user2.id);
-  //   const { body: subscribedToUser4 } = await subscribedToUser(app, user4.id);
+    const { body: subscribedToUser2 } = await subscribedToUser(app, user2.id);
+    const { body: subscribedToUser4 } = await subscribedToUser(app, user4.id);
 
-  //   t.ok(!errors);
-  //   t.ok(subscribedToUser2[0].id === user1.id);
-  //   t.ok(subscribedToUser4.length === 0);
-  // });
+    t.ok(!errors);
+    t.ok(subscribedToUser2[0].id === user1.id);
+    t.ok(subscribedToUser4.length === 0);
+  });
 });

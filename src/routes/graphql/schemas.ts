@@ -176,13 +176,30 @@ export const createGqlQuerySchema = new GraphQLSchema({
         resolve: async (_, { id, dto }: obj, context: PrismaClient) => {
           return await context.post.update({ where: { id }, data: dto });
         }
-      },      
+      },
       changeProfile: {
         type: TProfile,
         args: { id: uid, dto: TProfileUpd },
         resolve: async (_, { id, dto }: obj, context: PrismaClient) => {
           return await context.profile.update({ where: { id }, data: dto });
         }
+      },
+      subscribeTo: {
+        type: TUser,
+        args: { userId: uid, authorId: uid },
+        resolve: async (_, { userId, authorId }: obj['dto'], context: PrismaClient) => {
+          return await context.subscribersOnAuthors.create({ data: { subscriberId: userId, authorId } })
+            .then(async () => await context.user.findFirst({ where: { id: userId } }));
+        },
+      },
+      unsubscribeFrom: {
+        type: GraphQLBoolean,
+        args: { userId: uid, authorId: uid },
+        resolve: async (_, { userId, authorId }: obj['dto'], context: PrismaClient) => {
+          return await context.subscribersOnAuthors.deleteMany({ where: { subscriberId: userId, authorId } })
+            .then(() => true)
+            .catch(_ => false);
+        },
       },
     },
   }),
