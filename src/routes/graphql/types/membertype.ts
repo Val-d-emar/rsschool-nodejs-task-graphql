@@ -1,6 +1,7 @@
 import { GraphQLEnumType, GraphQLFloat, GraphQLInt, GraphQLList, GraphQLObjectType } from "graphql";
 import { TProfile } from "./profile.js";
 import { PrismaClient } from "@prisma/client";
+import { MemberTypeId } from "../../member-types/schemas.js";
 
 export const TMemberTypeId = new GraphQLEnumType({
     name: "MemberTypeId",
@@ -10,7 +11,7 @@ export const TMemberTypeId = new GraphQLEnumType({
     },
 });
 
-type obj = { id: string }
+type obj = { id: MemberTypeId }
 
 export const TMemberType: GraphQLObjectType = new GraphQLObjectType({
     name: "MemberType",

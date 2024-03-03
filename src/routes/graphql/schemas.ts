@@ -7,6 +7,8 @@ import { UUIDType } from './types/uuid.js';
 import { TProfile } from './types/profile.js';
 import { TMemberType, TMemberTypeId } from './types/membertype.js';
 import { userFields } from '../users/schemas.js';
+import { MemberTypeId } from '../member-types/schemas.js';
+import { UUID } from 'node:crypto';
 
 
 export const gqlResponseSchema = Type.Partial(
@@ -29,7 +31,7 @@ export const createGqlResponseSchema = {
 };
 
 type obj = {
-  id: string,
+  id: UUID,
   dto: {
     name: string;
     balance: number;
@@ -38,7 +40,9 @@ type obj = {
     content: string;
   };
 }
-
+type objm = {
+  id: MemberTypeId,
+}
 const uid = {
   type: UUIDType
 }
@@ -98,7 +102,7 @@ export const createGqlQuerySchema = new GraphQLSchema({
       memberType: {
         type: new GraphQLNonNull(TMemberType),
         args: { id: mid },
-        resolve: async (_, { id }: obj, context: PrismaClient) => {
+        resolve: async (_, { id }: objm, context: PrismaClient) => {
           return await context.memberType.findFirst({ where: { id } });
         },
       },

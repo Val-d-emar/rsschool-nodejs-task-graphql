@@ -1,10 +1,11 @@
-import { GraphQLFloat, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLString } from 'graphql';
+import { GraphQLFloat, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLString, subscribe } from 'graphql';
 
 import { UUIDType } from './uuid.js';
 import { TProfile } from './profile.js';
 import { TPost } from './post.js';
 import { PrismaClient } from '@prisma/client';
-type obj = { id: string }
+import { UUID } from 'node:crypto';
+type obj = { id: UUID }
 export const TUser: GraphQLObjectType = new GraphQLObjectType({
     name: 'User',
     fields: () => ({
@@ -26,7 +27,7 @@ export const TUser: GraphQLObjectType = new GraphQLObjectType({
         userSubscribedTo: {
             type: new GraphQLList(TUser),
             resolve: async ({ id }: obj, _, context: PrismaClient) => {
-                return await context.subscribersOnAuthors.findMany({
+                const sub = await context.subscribersOnAuthors.findMany({
                     where: {
                         subscriberId: id,
                     },
@@ -34,12 +35,13 @@ export const TUser: GraphQLObjectType = new GraphQLObjectType({
                         author: true,
                     },
                 });
+                return sub.map( ({author}) =>  author);
             }
         },
         subscribedToUser: {
             type: new GraphQLList(TUser),
             resolve: async ({ id }: obj, _, context: PrismaClient) => {
-                return await context.subscribersOnAuthors.findMany({
+                const sub = await context.subscribersOnAuthors.findMany({
                     where: {
                         authorId: id,
                     },
@@ -47,6 +49,7 @@ export const TUser: GraphQLObjectType = new GraphQLObjectType({
                         subscriber: true,
                     },
                 });
+                return sub.map(({subscriber}) =>  subscriber);
             }
         },
     }),
@@ -59,8 +62,4 @@ export const TUserAdd = {
             balance: { type: new GraphQLNonNull(GraphQLFloat) },
         }),
     }),
-    // dto: {
-    //     name: "",
-    //     balance: 0,
-    //   },
 }
