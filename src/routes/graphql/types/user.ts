@@ -1,4 +1,4 @@
-import { GraphQLFloat, GraphQLList, GraphQLObjectType, GraphQLString } from 'graphql';
+import { GraphQLFloat, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLString } from 'graphql';
 
 import { UUIDType } from './uuid.js';
 import { TProfile } from './profile.js';
@@ -40,7 +40,7 @@ export const TUser: GraphQLObjectType = new GraphQLObjectType({
             type: new GraphQLList(TUser),
             resolve: async ({ id }: obj, _, context: PrismaClient) => {
                 return await context.subscribersOnAuthors.findMany({
-                    where: { 
+                    where: {
                         authorId: id,
                     },
                     select: {
@@ -51,3 +51,16 @@ export const TUser: GraphQLObjectType = new GraphQLObjectType({
         },
     }),
 });
+export const TUserAdd = {
+    type: new GraphQLInputObjectType({
+        name: 'CreateUserInput',
+        fields: () => ({
+            name: { type: new GraphQLNonNull(GraphQLString) },
+            balance: { type: new GraphQLNonNull(GraphQLFloat) },
+        }),
+    }),
+    // dto: {
+    //     name: "",
+    //     balance: 0,
+    //   },
+}

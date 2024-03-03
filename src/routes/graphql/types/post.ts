@@ -1,4 +1,4 @@
-import { GraphQLObjectType, GraphQLString } from "graphql";
+import { GraphQLInputObjectType, GraphQLObjectType, GraphQLString } from "graphql";
 import { UUIDType } from "./uuid.js";
 import { TUser } from "./user.js";
 import { PrismaClient } from "@prisma/client";
@@ -20,3 +20,16 @@ export const TPost: GraphQLObjectType = new GraphQLObjectType({
         },
     }),
 });
+
+export const TPostAdd = {
+    type: new GraphQLInputObjectType({
+        name: "CreatePostInput",
+        fields: () => ({
+            id: { type: UUIDType },
+            title: { type: GraphQLString },
+            content: { type: GraphQLString },
+            authorId: { type: UUIDType },
+        }),
+    })
+}
+

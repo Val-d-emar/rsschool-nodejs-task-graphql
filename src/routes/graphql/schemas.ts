@@ -1,11 +1,13 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { GraphQLList, GraphQLObjectType, GraphQLSchema } from 'graphql';
-import { TUser } from './types/user.js';
+import { GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema } from 'graphql';
+import { TUser, TUserAdd } from './types/user.js';
 import { PrismaClient } from '@prisma/client';
-import { TPost } from './types/post.js';
+import { TPost, TPostAdd } from './types/post.js';
 import { UUIDType } from './types/uuid.js';
 import { TProfile } from './types/profile.js';
 import { TMemberType, TMemberTypeId } from './types/membertype.js';
+import { userFields } from '../users/schemas.js';
+
 
 export const gqlResponseSchema = Type.Partial(
   Type.Object({
@@ -27,8 +29,16 @@ export const createGqlResponseSchema = {
 };
 
 type obj = {
-  id: string
+  id: string,
+  dto: {
+    name: string;
+    balance: number;
+    authorId: string;
+    title: string;
+    content: string;
+  };
 }
+
 const uid = {
   type: UUIDType
 }
@@ -86,10 +96,36 @@ export const createGqlQuerySchema = new GraphQLSchema({
         },
       },
       memberType: {
-        type: TMemberType,
+        type: new GraphQLNonNull(TMemberType),
         args: { id: mid },
         resolve: async (_, { id }: obj, context: PrismaClient) => {
           return await context.memberType.findFirst({ where: { id } });
+        },
+      },
+    },
+  }),
+  mutation: new GraphQLObjectType({
+    name: 'Mutation',
+    fields: {
+      createUser: {
+        type: TUser,
+        args: { dto: TUserAdd },
+        resolve: async (_, { dto }: obj, context: PrismaClient) => {
+          return await context.user.create({ data: dto });
+        },
+      },
+      createPost: {
+        type: TPost,
+        args: { dto: TPostAdd },
+        resolve: async (_, { dto }: obj, context: PrismaClient) => {
+          return await context.post.create({ data: dto });
+        },
+      },
+      createProfile: {
+        type: TProfile,
+        args: { id: uid },
+        resolve: async (_, { id }: obj, context: PrismaClient) => {
+          return await context.profile.findFirst({ where: { id } });
         },
       },
     },
