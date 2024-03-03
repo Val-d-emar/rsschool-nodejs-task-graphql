@@ -58,7 +58,7 @@ export const createGqlQuerySchema = new GraphQLSchema({
           return await context.profile.findMany();
         },
       },
-      member_types: {
+      memberTypes: {
         type: new GraphQLList(TMemberType),
         resolve: async (_, __, context: PrismaClient) => {
           return await context.memberType.findMany();
@@ -85,7 +85,7 @@ export const createGqlQuerySchema = new GraphQLSchema({
           return await context.profile.findFirst({ where: { id } });
         },
       },
-      member_type: {
+      memberType: {
         type: TMemberType,
         args: { id: mid },
         resolve: async (_, { id }: obj, context: PrismaClient) => {

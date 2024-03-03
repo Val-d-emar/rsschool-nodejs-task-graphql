@@ -4,7 +4,8 @@ import { TUser } from "./user.js";
 import { TMemberType, TMemberTypeId } from "./membertype.js";
 import { PrismaClient } from "@prisma/client";
 type obj = {
-  userId: string
+  userId: string,
+  memberTypeId: string,
 }
 export const TProfile: GraphQLObjectType = new GraphQLObjectType({
   name: "Profile",
@@ -20,6 +21,11 @@ export const TProfile: GraphQLObjectType = new GraphQLObjectType({
       },
     },
     memberTypeId: { type: TMemberTypeId },
-    memberType: { type: TMemberType },
+    memberType: {
+      type: TMemberType,
+      resolve: async ({ memberTypeId }: obj, _, context: PrismaClient) => {
+        return await context.memberType.findFirst({ where: { id: memberTypeId } });
+      },
+    },
   }),
 });
