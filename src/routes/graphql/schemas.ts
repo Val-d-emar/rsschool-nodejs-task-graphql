@@ -1,10 +1,10 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { GraphQLBoolean, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema } from 'graphql';
-import { TUser, TUserAdd } from './types/user.js';
+import { TUser, TUserAdd, TUserUpd } from './types/user.js';
 import { PrismaClient } from '@prisma/client';
-import { TPost, TPostAdd } from './types/post.js';
+import { TPost, TPostAdd, TPostUpd } from './types/post.js';
 import { UUIDType } from './types/uuid.js';
-import { TProfile, TProfileAdd } from './types/profile.js';
+import { TProfile, TProfileAdd, TProfileUpd } from './types/profile.js';
 import { TMemberType, TMemberTypeId } from './types/membertype.js';
 import { userFields } from '../users/schemas.js';
 import { MemberTypeId } from '../member-types/schemas.js';
@@ -140,7 +140,7 @@ export const createGqlQuerySchema = new GraphQLSchema({
         type: GraphQLBoolean,
         args: { id: uid },
         resolve: async (_, { id }: obj, context: PrismaClient) => {
-          return await context.user.delete({ where: { id: id } })
+          return await context.user.delete({ where: { id } })
             .then(() => true)
             .catch(_ => false);
         }
@@ -149,7 +149,7 @@ export const createGqlQuerySchema = new GraphQLSchema({
         type: GraphQLBoolean,
         args: { id: uid },
         resolve: async (_, { id }: obj, context: PrismaClient) => {
-          return await context.post.delete({ where: { id: id } })
+          return await context.post.delete({ where: { id } })
             .then(() => true)
             .catch(_ => false);
         }
@@ -158,9 +158,30 @@ export const createGqlQuerySchema = new GraphQLSchema({
         type: GraphQLBoolean,
         args: { id: uid },
         resolve: async (_, { id }: obj, context: PrismaClient) => {
-          return await context.profile.delete({ where: { id: id } })
+          return await context.profile.delete({ where: { id } })
             .then(() => true)
             .catch(_ => false);
+        }
+      },
+      changeUser: {
+        type: TUser,
+        args: { id: uid, dto: TUserUpd },
+        resolve: async (_, { id, dto }: obj, context: PrismaClient) => {
+          return await context.user.update({ where: { id }, data: dto });
+        }
+      },
+      changePost: {
+        type: TPost,
+        args: { id: uid, dto: TPostUpd },
+        resolve: async (_, { id, dto }: obj, context: PrismaClient) => {
+          return await context.post.update({ where: { id }, data: dto });
+        }
+      },      
+      changeProfile: {
+        type: TProfile,
+        args: { id: uid, dto: TProfileUpd },
+        resolve: async (_, { id, dto }: obj, context: PrismaClient) => {
+          return await context.profile.update({ where: { id }, data: dto });
         }
       },
     },

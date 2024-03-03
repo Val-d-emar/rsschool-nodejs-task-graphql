@@ -63,3 +63,12 @@ export const TUserAdd = {
         }),
     }),
 }
+export const TUserUpd = {
+    type: new GraphQLInputObjectType({
+        name: 'ChangeUserInput',
+        fields: () => ({
+            name: { type: GraphQLString },
+            balance: { type: GraphQLFloat },
+        }),
+    }),
+}

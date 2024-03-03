@@ -33,3 +33,13 @@ export const TPostAdd = {
     })
 }
 
+export const TPostUpd = {
+    type: new GraphQLInputObjectType({
+        name: "ChangePostInput",
+        fields: () => ({
+            title: { type: GraphQLString },
+            content: { type: GraphQLString },
+            authorId: { type: UUIDType },
+        }),
+    })
+}

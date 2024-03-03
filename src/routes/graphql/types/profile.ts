@@ -42,3 +42,14 @@ export const TProfileAdd = {
     }),
   })
 }
+
+export const TProfileUpd = {
+  type: new GraphQLInputObjectType({
+    name: 'ChangeProfileInput',
+    fields: () => ({
+      memberTypeId: { type: TMemberTypeId },
+      isMale: { type: GraphQLBoolean },
+      yearOfBirth: { type: GraphQLInt },
+    }),
+  })
+}
