@@ -99,6 +99,38 @@ export const TUser: GraphQLObjectType = new GraphQLObjectType({
             //     }
             //     return await loaders.users2sub.load(id);
             // },
+            // resolve: async ({ id }: obj, _, { prisma, loaders }: TContext) => {
+            //     if (loaders.users2sub === undefined) {
+            //         loaders.users2sub = new DataLoader(async (ids) => {
+            //             const res = await prisma.user.findMany({
+            //                 where: {
+            //                     subscribedToUser: {
+            //                         some: {
+            //                             subscriberId: { in: ids as UUID[] },
+            //                         },
+            //                     },
+
+            //                 },
+            //                 include: {
+            //                     subscribedToUser: {
+            //                         select: {
+            //                             subscriber: true,
+            //                         }
+                                
+            //                     }
+            //                 }
+            //             });
+            //             // const sel = ids.map((id) => res.filter((r) => r.id === id));
+            //             const sel = res.map((r) => r.subscribedToUser);
+            //             const sel2 = sel.map((r) => r.);
+
+
+            //             const a = sel.map(({subscribedToUser}) => subscribedToUser.subscriber.id)
+            //             return 
+            //         });
+            //     }
+            //     return await loaders.users2sub.load(id);
+            // },
         },
         subscribedToUser: {
             type: new GraphQLList(TUser),
