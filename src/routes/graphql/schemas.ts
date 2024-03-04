@@ -8,6 +8,7 @@ import { TMemberType, TMemberTypeId } from './types/membertype.js';
 import { MemberTypeId } from '../member-types/schemas.js';
 import { UUID } from 'node:crypto';
 import { TContext } from './types/loader.js';
+import DataLoader from 'dataloader';
 
 
 export const gqlResponseSchema = Type.Partial(
@@ -83,8 +84,17 @@ export const createGqlQuerySchema = new GraphQLSchema({
       user: {
         type: TUser,
         args: { id: uid },
-        resolve: async (_, { id }: obj, { prisma }: TContext) => {
-          return await prisma.user.findFirst({ where: { id } });
+        // resolve: async (_, { id }: obj, { prisma }: TContext) => {
+        //   return await prisma.user.findFirst({ where: { id } });
+        // },
+        resolve: async (_, { id }: obj, { prisma, loaders }: TContext) => {
+          if (loaders.user === undefined) {
+            loaders.user = new DataLoader(async (ids) => {
+              const res = await prisma.user.findMany({ where: { id: { in: ids as string[] } } });
+              return ids.map((id) => res.find((r) => r.id === id));
+            });
+          }
+          return await loaders.user.load(id);
         },
       },
       post: {
