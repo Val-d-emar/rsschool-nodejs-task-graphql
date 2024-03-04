@@ -9,8 +9,8 @@
 - [X] **+144** 1.1 npm run test-queries
 - [X] **+90** 1.2 npm run test-mutations
 - [X] **+18** 2.1 npm run test-rule
-- [X] **+80** 3.1 npm run test-loader
-- [X] **+28** 3.2 npm run test-loader-prime
+- [ ] **+80** 3.1 npm run test-loader
+- [ ] **+28** 3.2 npm run test-loader-prime
 
 ## Info
 
@@ -19,7 +19,7 @@ If the one test was not completed, then the subsequent ones are considered not c
 
 ## Forfeits
 
-- [ ] **-100% of max task score** Fails: npm run test-integrity
+- [X] **-100% of max task score** Fails: npm run test-integrity
 - [ ] **-30% of max task score** Commits after deadline (except commits that affect only Readme.md, .gitignore, etc.)
 - [ ] **-20** No separate development branch
 - [ ] **-20** No Pull Request

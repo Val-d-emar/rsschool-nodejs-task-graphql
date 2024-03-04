@@ -1,7 +1,7 @@
 import { GraphQLInputObjectType, GraphQLObjectType, GraphQLString } from "graphql";
 import { UUIDType } from "./uuid.js";
 import { TUser } from "./user.js";
-import { PrismaClient } from "@prisma/client";
+import { TContext } from "./loader.js";
 
 type obj = { authorId: string }
 
@@ -14,8 +14,8 @@ export const TPost: GraphQLObjectType = new GraphQLObjectType({
         authorId: { type: UUIDType },
         author: {
             type: TUser,
-            resolve: async ({ authorId }: obj, _, context: PrismaClient) => {
-                return await context.user.findFirst({ where: { id: authorId } });
+            resolve: async ({ authorId }: obj, _, { prisma }: TContext) => {
+                return await prisma.user.findFirst({ where: { id: authorId } });
             },
         },
     }),

@@ -3,8 +3,8 @@ import { GraphQLFloat, GraphQLInputObjectType, GraphQLList, GraphQLNonNull, Grap
 import { UUIDType } from './uuid.js';
 import { TProfile } from './profile.js';
 import { TPost } from './post.js';
-import { PrismaClient } from '@prisma/client';
 import { UUID } from 'node:crypto';
+import { TContext } from './loader.js';
 type obj = { id: UUID }
 export const TUser: GraphQLObjectType = new GraphQLObjectType({
     name: 'User',
@@ -14,20 +14,20 @@ export const TUser: GraphQLObjectType = new GraphQLObjectType({
         balance: { type: GraphQLFloat },
         profile: {
             type: TProfile,
-            resolve: async ({ id }: obj, _, context: PrismaClient) => {
-                return await context.profile.findFirst({ where: { userId: id } });
+            resolve: async ({ id }: obj, _, { prisma }: TContext) => {
+                return await prisma.profile.findFirst({ where: { userId: id } });
             },
         },
         posts: {
             type: new GraphQLList(TPost),
-            resolve: async ({ id }: obj, _, context: PrismaClient) => {
-                return await context.post.findMany({ where: { authorId: id } });
+            resolve: async ({ id }: obj, _, { prisma }: TContext) => {
+                return await prisma.post.findMany({ where: { authorId: id } });
             }
         },
         userSubscribedTo: {
             type: new GraphQLList(TUser),
-            resolve: async ({ id }: obj, _, context: PrismaClient) => {
-                const sub = await context.subscribersOnAuthors.findMany({
+            resolve: async ({ id }: obj, _, { prisma }: TContext) => {
+                const sub = await prisma.subscribersOnAuthors.findMany({
                     where: {
                         subscriberId: id,
                     },
@@ -40,8 +40,8 @@ export const TUser: GraphQLObjectType = new GraphQLObjectType({
         },
         subscribedToUser: {
             type: new GraphQLList(TUser),
-            resolve: async ({ id }: obj, _, context: PrismaClient) => {
-                const sub = await context.subscribersOnAuthors.findMany({
+            resolve: async ({ id }: obj, _, { prisma }: TContext) => {
+                const sub = await prisma.subscribersOnAuthors.findMany({
                     where: {
                         authorId: id,
                     },

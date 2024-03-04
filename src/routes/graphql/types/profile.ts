@@ -2,7 +2,7 @@ import { GraphQLBoolean, GraphQLInputObjectType, GraphQLInt, GraphQLNonNull, Gra
 import { UUIDType } from "./uuid.js";
 import { TUser } from "./user.js";
 import { TMemberType, TMemberTypeId } from "./membertype.js";
-import { PrismaClient } from "@prisma/client";
+import { TContext } from "./loader.js";
 
 type obj = {
   userId: string,
@@ -17,15 +17,15 @@ export const TProfile: GraphQLObjectType = new GraphQLObjectType({
     userId: { type: UUIDType },
     user: {
       type: TUser,
-      resolve: async ({ userId }: obj, _, context: PrismaClient) => {
-        return await context.user.findFirst({ where: { id: userId } });
+      resolve: async ({ userId }: obj, _, { prisma }: TContext) => {
+        return await prisma.user.findFirst({ where: { id: userId } });
       },
     },
     memberTypeId: { type: TMemberTypeId },
     memberType: {
       type: TMemberType,
-      resolve: async ({ memberTypeId }: obj, _, context: PrismaClient) => {
-        return await context.memberType.findFirst({ where: { id: memberTypeId } });
+      resolve: async ({ memberTypeId }: obj, _, { prisma }: TContext) => {
+        return await prisma.memberType.findFirst({ where: { id: memberTypeId } });
       },
     },
   }),
