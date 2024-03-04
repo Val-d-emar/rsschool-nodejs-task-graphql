@@ -34,13 +34,13 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
             schema: createGqlQuerySchema,
             source: req.body.query,
             variableValues: req.body.variables,
-            // contextValue: prisma,
             contextValue: {
               prisma,
               loaders: {
-                user : undefined,
-                post : undefined,
-                profile : undefined,
+                user: undefined,
+                post: undefined,
+                profile: undefined,
+                member: undefined,
               },
             },
           }));

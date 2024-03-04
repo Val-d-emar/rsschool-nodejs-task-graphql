@@ -6,8 +6,8 @@ import { TContext } from "./loader.js";
 export const TMemberTypeId = new GraphQLEnumType({
     name: "MemberTypeId",
     values: {
-        basic: { value: "basic" },
-        business: { value: "business" },
+        basic: { value: MemberTypeId.BASIC },
+        business: { value: MemberTypeId.BUSINESS },
     },
 });
 
