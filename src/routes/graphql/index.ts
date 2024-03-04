@@ -39,8 +39,11 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
               loaders: {
                 user: undefined,
                 post: undefined,
+                posts: undefined,
                 profile: undefined,
                 member: undefined,
+                subs2user: undefined,
+                users2sub: undefined,
               },
             },
           }));
