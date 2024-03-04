@@ -100,15 +100,33 @@ export const createGqlQuerySchema = new GraphQLSchema({
       post: {
         type: TPost,
         args: { id: uid },
-        resolve: async (_, { id }: obj, { prisma }: TContext) => {
-          return await prisma.post.findFirst({ where: { id } });
+        // resolve: async (_, { id }: obj, { prisma }: TContext) => {
+        //   return await prisma.post.findFirst({ where: { id } });
+        // },
+        resolve: async (_, { id }: obj, { prisma, loaders }: TContext) => {
+          if (loaders.post === undefined) {
+            loaders.post = new DataLoader(async (ids) => {
+              const res = await prisma.post.findMany({ where: { id: { in: ids as string[] } } });
+              return ids.map((id) => res.find((r) => r.id === id));
+            });
+          }
+          return await loaders.post.load(id);
         },
       },
       profile: {
         type: TProfile,
         args: { id: uid },
-        resolve: async (_, { id }: obj, { prisma }: TContext) => {
-          return await prisma.profile.findFirst({ where: { id } });
+        // resolve: async (_, { id }: obj, { prisma }: TContext) => {
+        //   return await prisma.profile.findFirst({ where: { id } });
+        // },
+        resolve: async (_, { id }: obj, { prisma, loaders }: TContext) => {
+          if (loaders.profile === undefined) {
+            loaders.profile = new DataLoader(async (ids) => {
+              const res = await prisma.profile.findMany({ where: { id: { in: ids as string[] } } });
+              return ids.map((id) => res.find((r) => r.id === id));
+            });
+          }
+          return await loaders.profile.load(id);
         },
       },
       memberType: {
