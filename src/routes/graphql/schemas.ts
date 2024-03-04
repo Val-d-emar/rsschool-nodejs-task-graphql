@@ -6,7 +6,6 @@ import { TPost, TPostAdd, TPostUpd } from './types/post.js';
 import { UUIDType } from './types/uuid.js';
 import { TProfile, TProfileAdd, TProfileUpd } from './types/profile.js';
 import { TMemberType, TMemberTypeId } from './types/membertype.js';
-import { userFields } from '../users/schemas.js';
 import { MemberTypeId } from '../member-types/schemas.js';
 import { UUID } from 'node:crypto';
 
