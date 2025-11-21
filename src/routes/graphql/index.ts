@@ -19,6 +19,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
     async handler(req) {
+      // return graphql();
       return await new Promise((resolve, reject) => {
         const validation_errors = validate(
           createGqlQuerySchema,

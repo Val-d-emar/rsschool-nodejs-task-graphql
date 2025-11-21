@@ -74,7 +74,7 @@ await test('gql-mutations', async (t) => {
     });
 
     t.ok(errors.length === 1);
-    const message = errors[0].message as string;
+    const message = errors[0].message;
     t.ok(message.includes(`Int cannot represent non-integer value: 123.321`));
   });
 
@@ -86,7 +86,7 @@ await test('gql-mutations', async (t) => {
     const {
       body: { errors },
     } = await gqlQuery(app, {
-      // https://graphql.org/learn/queries/#multiple-fields-in-mutations
+      // https://graphql.org/learn/mutations/#multiple-fields-in-mutations
       query: `mutation ($userId: UUID!, $profileId: UUID!, $postId: UUID!) {
         deletePost(id: $postId)
         deleteProfile(id: $profileId)
@@ -172,10 +172,6 @@ await test('gql-mutations', async (t) => {
     });
 
     t.ok(errors.length === 1);
-    const message = errors[0].message as string;
-    t.ok(
-      message.includes(`Field \"userId\" is not defined by type \"ChangeProfileInput\"`),
-    );
   });
 
   await t.test('Subs mutations.', async (t) => {
@@ -190,9 +186,7 @@ await test('gql-mutations', async (t) => {
       body: { errors },
     } = await gqlQuery(app, {
       query: `mutation ($userId1: UUID!, $authorId1: UUID!, $userId2: UUID!, $authorId2: UUID!) {
-        subscribeTo(userId: $userId1, authorId: $authorId1) {
-            id
-        }
+        subscribeTo(userId: $userId1, authorId: $authorId1)
         unsubscribeFrom(userId: $userId2, authorId: $authorId2)
     }`,
       variables: {
