@@ -22,7 +22,6 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
     async handler(req) {
-      // return graphql();
       const { query, variables } = req.body;
 
       const validationErrors = validate(createGqlQuerySchema, parse(query), [
@@ -33,7 +32,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
         return { data: null, errors: validationErrors };
       }
 
-      const result = await graphql({
+      return graphql({
         schema: createGqlQuerySchema,
         source: query,
         variableValues: variables,
@@ -102,14 +101,6 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
           },
         },
       });
-      // if (result.errors) {
-      //   console.error(
-      //     'GRAPHQL EXECUTION ERRORS:',
-      //     JSON.stringify(result.errors, null, 2),
-      //   );
-      // }
-
-      return result;
     },
   });
 };
