@@ -11,7 +11,6 @@ import { TProfile } from './profile.js';
 import { TPost } from './post.js';
 import { UUID } from 'node:crypto';
 import { TContext } from './loader.js';
-import DataLoader from 'dataloader';
 
 type obj = { id: UUID };
 
@@ -23,63 +22,25 @@ export const TUser: GraphQLObjectType = new GraphQLObjectType({
     balance: { type: GraphQLFloat },
     profile: {
       type: TProfile,
-      resolve: async ({ id }: obj, _, { prisma, loaders }: TContext) => {
-        if (loaders.profile === undefined) {
-          loaders.profile = new DataLoader(async (ids) => {
-            const res = await prisma.profile.findMany({
-              where: { userId: { in: ids as UUID[] } },
-            });
-            return ids.map((id) => res.find((r) => r.userId === id));
-          });
-        }
-        return await loaders.profile.load(id);
+      resolve: async ({ id }: obj, _, { loaders }: TContext) => {
+        return await loaders.profileByUser.load(id);
       },
     },
     posts: {
       type: new GraphQLList(TPost),
-      resolve: async ({ id }: obj, _, { prisma, loaders }: TContext) => {
-        if (loaders.posts === undefined) {
-          loaders.posts = new DataLoader(async (ids) => {
-            const res = await prisma.post.findMany({
-              where: { authorId: { in: ids as UUID[] } },
-            });
-            return ids.map((id) => res.filter((r) => r.authorId === id));
-          });
-        }
+      resolve: async ({ id }: obj, _, { loaders }: TContext) => {
         return await loaders.posts.load(id);
       },
     },
     userSubscribedTo: {
       type: new GraphQLList(TUser),
-      resolve: async ({ id }: obj, _, { prisma, loaders }: TContext) => {
-        if (loaders.users2sub === undefined) {
-          loaders.users2sub = new DataLoader(async (ids) => {
-            const res = await prisma.subscribersOnAuthors.findMany({
-              where: { subscriberId: { in: ids as UUID[] } },
-              include: { author: true },
-            });
-            return ids.map((id) =>
-              res.filter((r) => r.subscriberId === id).map((r) => r.author),
-            );
-          });
-        }
+      resolve: async ({ id }: obj, _, { loaders }: TContext) => {
         return await loaders.users2sub.load(id);
       },
     },
     subscribedToUser: {
       type: new GraphQLList(TUser),
-      resolve: async ({ id }: obj, _, { prisma, loaders }: TContext) => {
-        if (loaders.subs2user === undefined) {
-          loaders.subs2user = new DataLoader(async (ids) => {
-            const res = await prisma.subscribersOnAuthors.findMany({
-              where: { authorId: { in: ids as UUID[] } },
-              include: { subscriber: true },
-            });
-            return ids.map((id) =>
-              res.filter((r) => r.authorId === id).map((r) => r.subscriber),
-            );
-          });
-        }
+      resolve: async ({ id }: obj, _, { loaders }: TContext) => {
         return await loaders.subs2user.load(id);
       },
     },

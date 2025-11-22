@@ -14,7 +14,6 @@ import { TMemberType, TMemberTypeId } from './types/membertype.js';
 import { MemberTypeId } from '../member-types/schemas.js';
 import { UUID } from 'node:crypto';
 import { TContext } from './types/loader.js';
-import DataLoader from 'dataloader';
 import { parseResolveInfo } from 'graphql-parse-resolve-info';
 import { User } from '@prisma/client';
 
@@ -163,64 +162,28 @@ export const createGqlQuerySchema = new GraphQLSchema({
       user: {
         type: TUser,
         args: { id: uid },
-        resolve: async (_, { id }: IdArgs, { prisma, loaders }: TContext) => {
-          if (loaders.user === undefined) {
-            loaders.user = new DataLoader(async (ids) => {
-              const res = await prisma.user.findMany({
-                where: { id: { in: ids as string[] } },
-              });
-              const map = new Map(res.map((u) => [u.id, u]));
-              return ids.map((id) => map.get(id));
-            });
-          }
+        resolve: async (_, { id }: IdArgs, { loaders }: TContext) => {
           return await loaders.user.load(id);
         },
       },
       post: {
         type: TPost,
         args: { id: uid },
-        resolve: async (_, { id }: IdArgs, { prisma, loaders }: TContext) => {
-          if (loaders.post === undefined) {
-            loaders.post = new DataLoader(async (ids) => {
-              const res = await prisma.post.findMany({
-                where: { id: { in: ids as string[] } },
-              });
-              const map = new Map(res.map((p) => [p.id, p]));
-              return ids.map((id) => map.get(id));
-            });
-          }
+        resolve: async (_, { id }: IdArgs, { loaders }: TContext) => {
           return await loaders.post.load(id);
         },
       },
       profile: {
         type: TProfile,
         args: { id: uid },
-        resolve: async (_, { id }: IdArgs, { prisma, loaders }: TContext) => {
-          if (loaders.profile === undefined) {
-            loaders.profile = new DataLoader(async (ids) => {
-              const res = await prisma.profile.findMany({
-                where: { id: { in: ids as string[] } },
-              });
-              const map = new Map(res.map((p) => [p.id, p]));
-              return ids.map((id) => map.get(id));
-            });
-          }
+        resolve: async (_, { id }: IdArgs, { loaders }: TContext) => {
           return await loaders.profile.load(id);
         },
       },
       memberType: {
         type: new GraphQLNonNull(TMemberType),
         args: { id: mid },
-        resolve: async (_, { id }: MemberIdArgs, { prisma, loaders }: TContext) => {
-          if (loaders.member === undefined) {
-            loaders.member = new DataLoader(async (ids) => {
-              const res = await prisma.memberType.findMany({
-                where: { id: { in: ids as MemberTypeId[] } },
-              });
-              const map = new Map(res.map((m) => [m.id, m]));
-              return ids.map((id) => map.get(id));
-            });
-          }
+        resolve: async (_, { id }: MemberIdArgs, { loaders }: TContext) => {
           return await loaders.member.load(id);
         },
       },
