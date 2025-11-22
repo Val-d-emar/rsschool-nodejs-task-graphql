@@ -35,12 +35,14 @@ export const TUser: GraphQLObjectType = new GraphQLObjectType({
     userSubscribedTo: {
       type: new GraphQLList(TUser),
       resolve: async ({ id }: obj, _, { loaders }: TContext) => {
+        // console.log(`DEBUG: Resolving userSubscribedTo for ${id}`);
         return await loaders.users2sub.load(id);
       },
     },
     subscribedToUser: {
       type: new GraphQLList(TUser),
       resolve: async ({ id }: obj, _, { loaders }: TContext) => {
+        // console.log(`DEBUG: Resolving subscribedToUser for ${id}`);
         return await loaders.subs2user.load(id);
       },
     },
