@@ -4,11 +4,11 @@ import { MemberTypeId } from "../../member-types/schemas.js";
 import { TContext } from "./loader.js";
 
 export const TMemberTypeId = new GraphQLEnumType({
-    name: "MemberTypeId",
-    values: {
-        basic: { value: MemberTypeId.BASIC },
-        business: { value: MemberTypeId.BUSINESS },
-    },
+  name: 'MemberTypeId',
+  values: {
+    BASIC: { value: MemberTypeId.BASIC },
+    BUSINESS: { value: MemberTypeId.BUSINESS },
+  },
 });
 
 type obj = { id: MemberTypeId }

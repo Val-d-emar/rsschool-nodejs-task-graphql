@@ -1,5 +1,11 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { GraphQLBoolean, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema } from 'graphql';
+import {
+  GraphQLBoolean,
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLSchema,
+} from 'graphql';
 import { TUser, TUserAdd, TUserUpd } from './types/user.js';
 import { TPost, TPostAdd, TPostUpd } from './types/post.js';
 import { UUIDType } from './types/uuid.js';
@@ -9,7 +15,8 @@ import { MemberTypeId } from '../member-types/schemas.js';
 import { UUID } from 'node:crypto';
 import { TContext } from './types/loader.js';
 import DataLoader from 'dataloader';
-
+import { parseResolveInfo } from 'graphql-parse-resolve-info';
+import { User } from '@prisma/client';
 
 export const gqlResponseSchema = Type.Partial(
   Type.Object({
@@ -30,37 +37,109 @@ export const createGqlResponseSchema = {
   ),
 };
 
-type obj = {
-  id: UUID,
-  dto: {
-    name: string;
-    balance: number;
-    authorId: UUID;
-    title: string;
-    content: string;
-    userId: UUID;
-    memberTypeId: MemberTypeId;
-    isMale: boolean;
-    yearOfBirth: number;
+interface CreateUserDto {
+  name: string;
+  balance: number;
+}
+interface ChangeUserDto {
+  name?: string;
+  balance?: number;
+}
+
+interface CreatePostDto {
+  title: string;
+  content: string;
+  authorId: UUID;
+}
+interface ChangePostDto {
+  title?: string;
+  content?: string;
+  authorId?: UUID;
+}
+
+interface CreateProfileDto {
+  isMale: boolean;
+  yearOfBirth: number;
+  memberTypeId: MemberTypeId;
+  userId: UUID;
+}
+interface ChangeProfileDto {
+  memberTypeId?: MemberTypeId;
+  isMale?: boolean;
+  yearOfBirth?: number;
+}
+
+interface SubscribeDto {
+  userId: UUID;
+  authorId: UUID;
+}
+
+type IdArgs = { id: UUID };
+type MemberIdArgs = { id: MemberTypeId };
+
+const uid = {
+  type: UUIDType,
+};
+const mid = {
+  type: TMemberTypeId,
+};
+
+interface ParsedInfo {
+  fieldsByTypeName: {
+    [typeName: string]: {
+      [fieldName: string]: unknown;
+    };
   };
 }
-type obj_m = {
-  id: MemberTypeId,
+
+interface UserWithRelations extends User {
+  userSubscribedTo?: { author: User }[];
+  subscribedToUser?: { subscriber: User }[];
 }
-const uid = {
-  type: UUIDType
-}
-const mid = {
-  type: TMemberTypeId
-}
+
 export const createGqlQuerySchema = new GraphQLSchema({
   query: new GraphQLObjectType({
     name: 'Query',
     fields: {
       users: {
         type: new GraphQLList(TUser),
-        resolve: async (_, __, { prisma }: TContext) => {
-          return await prisma.user.findMany();
+        resolve: async (_, __, { prisma, loaders }: TContext, info) => {
+          const parsedInfo = parseResolveInfo(info) as unknown as ParsedInfo;
+          const fields = parsedInfo.fieldsByTypeName['User'];
+
+          const includeConfig: {
+            userSubscribedTo?: { include: { author: true } };
+            subscribedToUser?: { include: { subscriber: true } };
+          } = {};
+
+          if (fields) {
+            if ('userSubscribedTo' in fields) {
+              includeConfig.userSubscribedTo = { include: { author: true } };
+            }
+            if ('subscribedToUser' in fields) {
+              includeConfig.subscribedToUser = { include: { subscriber: true } };
+            }
+          }
+
+          const users = await prisma.user.findMany({
+            include: Object.keys(includeConfig).length > 0 ? includeConfig : undefined,
+          });
+
+          const typedUsers = users as unknown as UserWithRelations[];
+
+          if (includeConfig.userSubscribedTo || includeConfig.subscribedToUser) {
+            for (const user of typedUsers) {
+              if (includeConfig.userSubscribedTo && user.userSubscribedTo) {
+                const authors = user.userSubscribedTo.map((sub) => sub.author);
+                loaders.users2sub.prime(user.id, authors);
+              }
+              if (includeConfig.subscribedToUser && user.subscribedToUser) {
+                const subscribers = user.subscribedToUser.map((sub) => sub.subscriber);
+                loaders.subs2user.prime(user.id, subscribers);
+              }
+            }
+          }
+          return users;
         },
       },
       posts: {
@@ -84,14 +163,14 @@ export const createGqlQuerySchema = new GraphQLSchema({
       user: {
         type: TUser,
         args: { id: uid },
-        // resolve: async (_, { id }: obj, { prisma }: TContext) => {
-        //   return await prisma.user.findFirst({ where: { id } });
-        // },
-        resolve: async (_, { id }: obj, { prisma, loaders }: TContext) => {
+        resolve: async (_, { id }: IdArgs, { prisma, loaders }: TContext) => {
           if (loaders.user === undefined) {
             loaders.user = new DataLoader(async (ids) => {
-              const res = await prisma.user.findMany({ where: { id: { in: ids as UUID[] } } });
-              return ids.map((id) => res.find((r) => r.id === id));
+              const res = await prisma.user.findMany({
+                where: { id: { in: ids as string[] } },
+              });
+              const map = new Map(res.map((u) => [u.id, u]));
+              return ids.map((id) => map.get(id));
             });
           }
           return await loaders.user.load(id);
@@ -100,14 +179,14 @@ export const createGqlQuerySchema = new GraphQLSchema({
       post: {
         type: TPost,
         args: { id: uid },
-        // resolve: async (_, { id }: obj, { prisma }: TContext) => {
-        //   return await prisma.post.findFirst({ where: { id } });
-        // },
-        resolve: async (_, { id }: obj, { prisma, loaders }: TContext) => {
+        resolve: async (_, { id }: IdArgs, { prisma, loaders }: TContext) => {
           if (loaders.post === undefined) {
             loaders.post = new DataLoader(async (ids) => {
-              const res = await prisma.post.findMany({ where: { id: { in: ids as UUID[] } } });
-              return ids.map((id) => res.find((r) => r.id === id));
+              const res = await prisma.post.findMany({
+                where: { id: { in: ids as string[] } },
+              });
+              const map = new Map(res.map((p) => [p.id, p]));
+              return ids.map((id) => map.get(id));
             });
           }
           return await loaders.post.load(id);
@@ -116,14 +195,14 @@ export const createGqlQuerySchema = new GraphQLSchema({
       profile: {
         type: TProfile,
         args: { id: uid },
-        // resolve: async (_, { id }: obj, { prisma }: TContext) => {
-        //   return await prisma.profile.findFirst({ where: { id } });
-        // },
-        resolve: async (_, { id }: obj, { prisma, loaders }: TContext) => {
+        resolve: async (_, { id }: IdArgs, { prisma, loaders }: TContext) => {
           if (loaders.profile === undefined) {
             loaders.profile = new DataLoader(async (ids) => {
-              const res = await prisma.profile.findMany({ where: { id: { in: ids as UUID[] } } });
-              return ids.map((id) => res.find((r) => r.id === id));
+              const res = await prisma.profile.findMany({
+                where: { id: { in: ids as string[] } },
+              });
+              const map = new Map(res.map((p) => [p.id, p]));
+              return ids.map((id) => map.get(id));
             });
           }
           return await loaders.profile.load(id);
@@ -132,14 +211,14 @@ export const createGqlQuerySchema = new GraphQLSchema({
       memberType: {
         type: new GraphQLNonNull(TMemberType),
         args: { id: mid },
-        // resolve: async (_, { id }: obj_m, { prisma }: TContext) => {
-        //   return await prisma.memberType.findFirst({ where: { id } });
-        // },
-        resolve: async (_, { id }: obj_m, { prisma, loaders }: TContext) => {
+        resolve: async (_, { id }: MemberIdArgs, { prisma, loaders }: TContext) => {
           if (loaders.member === undefined) {
             loaders.member = new DataLoader(async (ids) => {
-              const res = await prisma.memberType.findMany({ where: { id: { in: ids as MemberTypeId[] } } });
-              return ids.map((id) => res.find((r) => r.id === id));
+              const res = await prisma.memberType.findMany({
+                where: { id: { in: ids as MemberTypeId[] } },
+              });
+              const map = new Map(res.map((m) => [m.id, m]));
+              return ids.map((id) => map.get(id));
             });
           }
           return await loaders.member.load(id);
@@ -153,90 +232,121 @@ export const createGqlQuerySchema = new GraphQLSchema({
       createUser: {
         type: TUser,
         args: { dto: TUserAdd },
-        resolve: async (_, { dto }: obj, { prisma }: TContext) => {
+        resolve: async (_, { dto }: { dto: CreateUserDto }, { prisma }: TContext) => {
           return await prisma.user.create({ data: dto });
         },
       },
       createPost: {
         type: TPost,
         args: { dto: TPostAdd },
-        resolve: async (_, { dto }: obj, { prisma }: TContext) => {
+        resolve: async (_, { dto }: { dto: CreatePostDto }, { prisma }: TContext) => {
           return await prisma.post.create({ data: dto });
         },
       },
       createProfile: {
         type: TProfile,
         args: { dto: TProfileAdd },
-        resolve: async (_, { dto }: obj, { prisma }: TContext) => {
+        resolve: async (_, { dto }: { dto: CreateProfileDto }, { prisma }: TContext) => {
           return await prisma.profile.create({ data: dto });
         },
       },
       deleteUser: {
         type: GraphQLBoolean,
         args: { id: uid },
-        resolve: async (_, { id }: obj, { prisma }: TContext) => {
-          return await prisma.user.delete({ where: { id } })
-            .then(() => true)
-            .catch(_ => false);
-        }
+        resolve: async (_, { id }: IdArgs, { prisma }: TContext) => {
+          try {
+            await prisma.user.delete({ where: { id } });
+            return true;
+          } catch {
+            return false;
+          }
+        },
       },
       deletePost: {
         type: GraphQLBoolean,
         args: { id: uid },
-        resolve: async (_, { id }: obj, { prisma }: TContext) => {
-          return await prisma.post.delete({ where: { id } })
-            .then(() => true)
-            .catch(_ => false);
-        }
+        resolve: async (_, { id }: IdArgs, { prisma }: TContext) => {
+          try {
+            await prisma.post.delete({ where: { id } });
+            return true;
+          } catch {
+            return false;
+          }
+        },
       },
       deleteProfile: {
         type: GraphQLBoolean,
         args: { id: uid },
-        resolve: async (_, { id }: obj, { prisma }: TContext) => {
-          return await prisma.profile.delete({ where: { id } })
-            .then(() => true)
-            .catch(_ => false);
-        }
+        resolve: async (_, { id }: IdArgs, { prisma }: TContext) => {
+          try {
+            await prisma.profile.delete({ where: { id } });
+            return true;
+          } catch {
+            return false;
+          }
+        },
       },
       changeUser: {
         type: TUser,
         args: { id: uid, dto: TUserUpd },
-        resolve: async (_, { id, dto }: obj, { prisma }: TContext) => {
+        resolve: async (
+          _,
+          { id, dto }: { id: UUID; dto: ChangeUserDto },
+          { prisma }: TContext,
+        ) => {
           return await prisma.user.update({ where: { id }, data: dto });
-        }
+        },
       },
       changePost: {
         type: TPost,
         args: { id: uid, dto: TPostUpd },
-        resolve: async (_, { id, dto }: obj, { prisma }: TContext) => {
+        resolve: async (
+          _,
+          { id, dto }: { id: UUID; dto: ChangePostDto },
+          { prisma }: TContext,
+        ) => {
           return await prisma.post.update({ where: { id }, data: dto });
-        }
+        },
       },
       changeProfile: {
         type: TProfile,
         args: { id: uid, dto: TProfileUpd },
-        resolve: async (_, { id, dto }: obj, { prisma }: TContext) => {
+        resolve: async (
+          _,
+          { id, dto }: { id: UUID; dto: ChangeProfileDto },
+          { prisma }: TContext,
+        ) => {
           return await prisma.profile.update({ where: { id }, data: dto });
-        }
+        },
       },
       subscribeTo: {
-        type: TUser,
+        type: GraphQLBoolean,
         args: { userId: uid, authorId: uid },
-        resolve: async (_, { userId, authorId }: obj['dto'], { prisma }: TContext) => {
-          return await prisma.subscribersOnAuthors.create({ data: { subscriberId: userId, authorId } })
-            .then(async () => await prisma.user.findFirst({ where: { id: userId } }));
+        resolve: async (_, { userId, authorId }: SubscribeDto, { prisma }: TContext) => {
+          try {
+            await prisma.subscribersOnAuthors.create({
+              data: { subscriberId: userId, authorId },
+            });
+            return true;
+          } catch {
+            return false;
+          }
         },
       },
       unsubscribeFrom: {
         type: GraphQLBoolean,
         args: { userId: uid, authorId: uid },
-        resolve: async (_, { userId, authorId }: obj['dto'], { prisma }: TContext) => {
-          return await prisma.subscribersOnAuthors.deleteMany({ where: { subscriberId: userId, authorId } })
-            .then(() => true)
-            .catch(_ => false);
+        resolve: async (_, { userId, authorId }: SubscribeDto, { prisma }: TContext) => {
+          try {
+            await prisma.subscribersOnAuthors.deleteMany({
+              where: { subscriberId: userId, authorId },
+            });
+            return true;
+          } catch {
+            return false;
+          }
         },
       },
     },
   }),
 });
-
